@@ -58,6 +58,7 @@ const ConversationBox: React.FC<ConversationBoxProps> = ({
 
   return (
     <div
+      onClick={handleClick}
       className={clsx(
         `w-full
         relative
