@@ -7,7 +7,7 @@ import { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import Input from '../Input';
+import Input from '../inputs/Input';
 import Image from 'next/image';
 import { CldUploadButton } from 'next-cloudinary';
 import Button from '../Button';
