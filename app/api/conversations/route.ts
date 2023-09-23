@@ -1,6 +1,7 @@
-import getCurrentUser from '@/app/actions/getCurrentUser';
 import { NextResponse } from 'next/server';
+import { pusherServer } from '@/app/libs/pusher';
 
+import getCurrentUser from '@/app/actions/getCurrentUser';
 import prisma from '@/app/libs/prismadb';
 
 export async function POST(request: Request) {
@@ -18,7 +19,7 @@ export async function POST(request: Request) {
     }
 
     if (isGroup) {
-      const newConversation = await prisma?.conversation.create({
+      const newConversation = await prisma.conversation.create({
         data: {
           name,
           isGroup,
@@ -34,6 +35,12 @@ export async function POST(request: Request) {
         include: { users: true },
       });
 
+      newConversation.users.forEach((user) => {
+        if (user.email) {
+          pusherServer.trigger(user.email, 'conversation:new', newConversation);
+        }
+      });
+
       return NextResponse.json(newConversation);
     }
 
@@ -46,9 +53,9 @@ export async function POST(request: Request) {
       },
     });
 
-    const singleConersation = existingConversations[0];
+    const singleConversation = existingConversations[0];
 
-    if (singleConersation) return NextResponse.json(singleConersation);
+    if (singleConversation) return NextResponse.json(singleConversation);
 
     const newConversation = await prisma.conversation.create({
       data: {
@@ -57,6 +64,12 @@ export async function POST(request: Request) {
         },
       },
       include: { users: true },
+    });
+
+    newConversation.users.map((user) => {
+      if (user.email) {
+        pusherServer.trigger(user.email, 'conversation:new', newConversation);
+      }
     });
 
     return NextResponse.json(newConversation);

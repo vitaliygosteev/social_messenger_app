@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { pusherClient } from '@/app/libs/pusher';
 import clsx from 'clsx';
+import { find } from 'lodash';
 import { MdOutlineGroupAdd } from 'react-icons/md';
 
 import ConversationBox from './ConversationBox';
@@ -25,7 +28,50 @@ const ConversationsList: React.FC<ConversationsListProps> = ({
   const [items, setItems] = useState(initialItems);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const session = useSession();
   const { conversationId, isOpen } = useConversation();
+
+  const pusherKey = useMemo(() => {
+    return session.data?.user?.email;
+  }, [session.data?.user?.email]);
+
+  useEffect(() => {
+    if (!pusherKey) return;
+
+    pusherClient.subscribe(pusherKey);
+
+    const updateHandler = (conversation: FullConversationType) => {
+      setItems((current) =>
+        current.map((currentConversation) => {
+          if (currentConversation.id === conversation.id) {
+            return {
+              ...currentConversation,
+              messages: conversation.messages,
+            };
+          }
+          return currentConversation;
+        })
+      );
+    };
+
+    const newHandler = (conversation: FullConversationType) => {
+      setItems((current) => {
+        if (find(current, { id: conversation.id })) return current;
+        return [conversation, ...current];
+      });
+    };
+
+    const removeHandler = (conversation: FullConversationType) => {
+      setItems((current) => {
+        return [...current.filter((c) => c.id !== conversation.id)];
+      });
+    };
+
+    pusherClient.bind('conversation:update', updateHandler);
+    pusherClient.bind('conversation:new', newHandler);
+    pusherClient.bind('conversation:remove', removeHandler);
+  }, [pusherKey]);
+
   return (
     <>
       <GroupChatModal
