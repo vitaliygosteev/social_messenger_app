@@ -1,6 +1,6 @@
 # Social messenger app
 
-A social messenger app created using Next.js 13, Tailwind, Prisma, MongoDB and Pusher.
+A [social messenger app](https://social-messenger-app.vercel.app/) created using Next 13, Tailwind, Prisma, MongoDB and Pusher.
 
 ### Key Features:
 - Real-time messaging
